@@ -7,27 +7,33 @@ import { checkWinnerFrom, checkEndGame } from "./logic/board.js"; // importa com
 
 import { WinnerModal } from "./components/WinnerModal.jsx";
 
+import { saveGameToStorage, resetGameStorage } from "./logic/storage/index.js";
 
 function App() {
-  // sirve para crear el tablero, useStare se usa para renderizar el tablero cada vez que hay un juego nuevo.
-  const [board, setBoard] = useState(
-    Array(9).fill(null))
 
-  const [turn, setTurn] = useState(TURNS.X)
+  // sirve para crear el tablero, useStare se usa para renderizar el tablero cada vez que hay un juego nuevo.
+  const [board, setBoard] = useState( () => {
+    const boardFromStorage = window.localStorage.getItem('board') // sirve para inicializar el estado de boardstorage para guardar la informacion.
+    if (boardFromStorage) return JSON.parse(boardFromStorage) 
+    return Array(9).fill(null)
+  })
+    
+  const [turn, setTurn] = useState(() => {
+    const turnFromStorage = window.localStorage.getItem('turn')
+    return turnFromStorage ?? TURNS.X
+  })
 
   //null es que no hay ganador, false es que hay un empate.
   const [winner, setWinner]  = useState(null)
-
- 
 
   // funcion para resetear el juego para volver a jugar poe medio de estados sin resetear la pagina. 
   const resetGame = () =>{
     setBoard(Array(9).fill(null))
     setTurn(TURNS.X)
     setWinner(null)
-  }
 
-  
+    resetGameStorage()
+  }
 
   const updateBoard = (index) => {
     // no actualizamos esta posicion si ya tiene algo
@@ -41,6 +47,13 @@ function App() {
     //cambiar el turno
     const newTurn = turn === TURNS.X ? TURNS.O : TURNS.X;
     setTurn(newTurn)
+    
+    //guardar la partida
+    saveGameToStorage({
+      board: newBoard,
+      turn: newTurn
+    })
+
     //revisar ganador
     const newWinner = checkWinnerFrom(newBoard)
     if(newWinner){
@@ -76,7 +89,6 @@ function App() {
         </Square>
       </section>
         <WinnerModal resetGame={resetGame} winner={winner}/>
-
     </main>
   );
 }
